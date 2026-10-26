@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="场景工作台">
+  <rect x="5" y="9" width="54" height="46" rx="9" fill="none" stroke="#2f6bff" stroke-width="3.5"/>
+  <path d="M5 21.5h54" stroke="#2f6bff" stroke-width="3.5"/>
+  <path d="M42.5 21.5V55" stroke="#2f6bff" stroke-width="3.5" opacity="0.5"/>
+  <circle cx="13" cy="15.2" r="2.4" fill="#2f6bff"/>
+  <circle cx="21.5" cy="15.2" r="2.4" fill="#2f6bff" opacity="0.5"/>
+</svg>

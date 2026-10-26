@@ -112,7 +112,7 @@ ctx.slots.inject("workbench.aside", () =>
 本机是 **native** 型，第 2 步会被宿主拒绝：
 `directoryPicker.list needs the browse capability; the composed picker serves "native"`。
 所以「打开工作台就自动认领」只走第 1、2 步（**不会弹窗**，失败就静默留按钮）；
-点「创建工作区」才允许第 3 步弹对话框。
+点「+ 新对话」才允许第 3 步弹对话框。
 
 主目录怎么来：客户端拿不到 homedir，用**已有工作区的路径**反推（`C:\Users\X\…` 或 `/home/x/…`），
 再拼 `Documents/deepseek-harness/<工作台名>`；一个工作区都没有时反推不出，直接走对话框。
@@ -120,8 +120,11 @@ ctx.slots.inject("workbench.aside", () =>
 ## 安装 / 卸载
 
 ```powershell
-# 安装（本机已装）
+# 安装（本机已装，本地目录来源）
 & '…\dsh.cmd' plugin --profile desktop add <本目录>
+
+# 从 Git 仓库安装
+& '…\dsh.cmd' plugin --profile desktop add https://github.com/<owner>/<repo>.git
 
 # 卸载
 & '…\dsh.cmd' plugin --profile desktop remove dsh-workbench-kit
@@ -130,11 +133,53 @@ ctx.slots.inject("workbench.aside", () =>
 装载时机：profile 可热重载时改动立即生效，否则重启 DSH 后生效。改完 `lib/client.js` 后刷新页面即可
 （客户端 bundle 按行重新拉取）。
 
+## 发布规则（对照 DSH 官方插件文档）
+
+权威来源是 DSH 自带的 `cordis-plugin-development` 技能：`references/host-plugin.md`（组合包与宿主插件）
+与 `references/ui-plugin.md`（Web 界面插件）、`references/practices.md`（扩展点选择）。
+
+### 仓库名 vs 包名
+
+**加载器只认 `package.json` 的 `name`，仓库名不参与任何加载或安装判断。**
+改名不影响安装结果，所以仓库名可以随便改；但建议与包名一致（`dsh-workbench-kit`），
+否则别人看到「仓库名 ≠ 插件名」会犹豫是不是同一个东西。
+
+`dsh plugin add` 接受三种来源（对应 `inspect` 的三种 spec）：
+
+| 来源 | 形式 | 说明 |
+|---|---|---|
+| 本地路径 | 含 `package.json` 的目录绝对路径 | 安装前直接读清单校验 peer 兼容性 |
+| git | `https://github.com/<owner>/<repo>.git` 或 `github:<owner>/<repo>` | 安装前 `git ls-remote` 探活（禁凭据、默认 5s）；peer 检查在抓取**之后**，不兼容会回滚清单与锁文件 |
+| registry | 包名（可带版本范围） | 经 pnpm 查询，按 registry 顺序回退 |
+
+### 清单字段（缺一项就装不成或显示不完整）
+
+| 字段 | 本项目 | 作用 |
+|---|---|---|
+| `name` / `version` | `dsh-workbench-kit` / `0.1.0` | 包身份；**客户端工厂 id 必须等于 name** |
+| `dsh.bundle.patch` | `./cordis.patch.yml` | 有它才算「组合包」，否则插件页判 `not-bundle` |
+| `dsh.client.platform` | `web` | 声明带浏览器半边 |
+| `dsh.manifestVersion` | `1` | 清单格式版本（当前唯一取值） |
+| `exports["./client"]` | `./lib/client.js` | 加载器按此取浏览器 bundle |
+| `exports["./package.json"]` | — | 插件页读显示元数据用 |
+| `icon`、`locale/*.json` | `icon.svg`、`en.json`、`zh.json` | 插件卡片的标题/描述/图标；缺失回落 `name` 与 `description` + 默认图 |
+| `engines.dsh`、`peerDependencies` | `>=0.2.0-rc.2`、cordis `>=4.0.0 <5` | 作者声明的兼容范围；不兼容时安装被拒并给 `incompatible-version` |
+
+本机实测宿主：**dsh 0.2.0-rc.2 / cordis 4.0.4**（peer 范围覆盖 ✓）。
+
+### 其它约定
+
+- 宿主半边（`lib/index.js`）要么导出 `apply(ctx, config)`（可带 `inject` / `Config`），要么默认导出服务类，
+  不要混用；本插件是 `apply` 空实现。
+- 图标：`icon` 为相对清单目录的路径，支持 SVG/PNG/JPEG/WebP，≤ 256 KiB，不接受绝对路径、URL、越界路径与逃逸符号链接。
+- 界面文案建议走客户端 locale 服务（本插件当前硬编码中文，将来要做多语言再迁）。
+- 替换已安装包的新版本后必须重启宿主才能加载新 JS 代；新增组合包可以走 HMR。
+
 ## 自检
 
 ```powershell
 cd plugins\dsh-workbench-kit
-node scripts\smoke.mjs      # 69 项
+node scripts\smoke.mjs      # 79 项
 ```
 
 不联网、不依赖 GUI：桩 `window.__ModuleLoader__` 捕获工厂，桩 `slots`/`ctx` 记录注册，桩渲染器

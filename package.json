@@ -1,9 +1,10 @@
 {
   "name": "dsh-workbench-kit",
   "version": "0.1.0",
-  "description": "场景工作台框架（入口骨架）：左栏面板入口 + 右栏开始页入口，同一点进一张空白工作台",
+  "description": "场景工作台框架（入口骨架）：左栏 + 会话视图条 + 右栏三处入口共用一个通用框体（正文/对话栏/动作三席位），并带绑定专属工作区的对话中心",
   "type": "module",
   "main": "lib/index.js",
+  "icon": "./icon.svg",
   "exports": {
     ".": {
       "default": "./lib/index.js"
@@ -11,12 +12,15 @@
     "./client": {
       "default": "./lib/client.js"
     },
+    "./locale/*.json": "./locale/*.json",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.js",
     "lib/client.js",
     "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
     "README.md",
     "scripts/smoke.mjs"
   ],
@@ -33,7 +37,8 @@
     }
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "dsh": ">=0.2.0-rc.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.0 <5"

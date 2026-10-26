@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Workbench Kit",
+    "description": "Workbench entry skeleton: sidebar panel, conversation view strip and right-pane entry that all open one generic frame (body / aside / actions seats), plus a chat center bound to the workbench's own workspace."
+  }
+}

@@ -9,7 +9,7 @@
  *   node scripts/smoke.mjs
  */
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -361,6 +361,27 @@ globalThis.localStorage = {
 }
 check('存储不可用时退回展开且不抛错', mod.readAsideOpen() === true && mod.writeAsideOpen(false) === undefined)
 delete globalThis.localStorage
+
+/* ---------- 11. 发布契约（对照官方 references/host-plugin.md 与 ui-plugin.md） ---------- */
+
+const pkg = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
+check('客户端工厂 id 等于包名（加载器按包名找客户端）', loaded?.id === pkg.name, `${loaded?.id} vs ${pkg.name}`)
+check('声明组合包 patch（缺了会被判 not-bundle）',
+	typeof pkg.dsh?.bundle?.patch === 'string' && pkg.dsh.bundle.patch.length > 0)
+check('客户端平台声明为 web', pkg.dsh?.client?.platform === 'web')
+check('manifestVersion = 1', pkg.dsh?.manifestVersion === 1)
+check('exports 暴露 ./client 与 ./package.json',
+	pkg.exports?.['./client'] !== undefined && pkg.exports?.['./package.json'] !== undefined)
+check('patch 文件确实存在', existsSync(join(packageRoot, pkg.dsh.bundle.patch)), pkg.dsh.bundle.patch)
+check('图标是允许的格式且存在',
+	typeof pkg.icon === 'string' && /\.(svg|png|jpe?g|webp)$/i.test(pkg.icon) && existsSync(join(packageRoot, pkg.icon)), pkg.icon)
+const localeEn = JSON.parse(readFileSync(join(packageRoot, 'locale/en.json'), 'utf8'))
+const localeZh = JSON.parse(readFileSync(join(packageRoot, 'locale/zh.json'), 'utf8'))
+check('双语 locale 都带 meta.title 与 meta.description',
+	Boolean(localeEn.meta?.title && localeEn.meta?.description && localeZh.meta?.title && localeZh.meta?.description))
+check('cordis peer 范围覆盖宿主 4.x', /^>=\s*4/.test(pkg.peerDependencies?.['@deepseek-ai/cordis'] ?? ''), pkg.peerDependencies?.['@deepseek-ai/cordis'])
+check('files 白名单包含 patch / 图标 / locale / 客户端',
+	['cordis.patch.yml', 'icon.svg', 'locale/*.json', 'lib/client.js'].every((entry) => pkg.files?.includes(entry)))
 
 /* ---------- 汇总 ---------- */
 
