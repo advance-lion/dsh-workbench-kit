@@ -327,6 +327,40 @@ const noWorkspaceHtml = render(ReactStub.createElement(mod.ChatCenter, {
 check('没有同名工作区时也有「+ 新对话」（点它会先建工作区）',
 	noWorkspaceHtml.includes('+ 新对话') && !noWorkspaceHtml.includes('创建工作区'), noWorkspaceHtml.slice(0, 160))
 check('没有工作区时提示会自动建目录', noWorkspaceHtml.includes('自动') && noWorkspaceHtml.includes('deepseek-harness'))
+check('对话栏不再渲染临时接线状态行', !chatHtml.includes('服务 sessions'), chatHtml.slice(-120))
+
+/* ---------- 10. 对话栏折叠状态持久化 ---------- */
+
+const storage = new Map()
+globalThis.localStorage = {
+	getItem: (key) => (storage.has(key) ? storage.get(key) : null),
+	setItem: (key, value) => storage.set(key, String(value)),
+}
+check('没有记录时默认为展开', mod.readAsideOpen() === true)
+mod.writeAsideOpen(false)
+check('折叠时写入 localStorage', storage.get(mod.ASIDE_STATE_KEY) === '0', storage.get(mod.ASIDE_STATE_KEY))
+check('再次读取得到折叠状态', mod.readAsideOpen() === false)
+mod.writeAsideOpen(true)
+check('展开状态同样持久化', mod.readAsideOpen() === true)
+
+// 端到端：存储里是折叠态时，框体直接按折叠渲染（刷新后不回弹）
+mod.writeAsideOpen(false)
+const collapsedFrame = render(ReactStub.createElement(mod.WorkbenchFrame, { renderSlot: renderSlotStub }))
+check('框体按存储的折叠状态渲染',
+	collapsedFrame.includes('data-dsh-workbench-aside="collapsed"'), collapsedFrame.slice(0, 160))
+mod.writeAsideOpen(true)
+
+// 存储不可用（隐私模式 / 配额满）→ 退回展开，不抛错
+globalThis.localStorage = {
+	getItem: () => {
+		throw new Error('denied')
+	},
+	setItem: () => {
+		throw new Error('denied')
+	},
+}
+check('存储不可用时退回展开且不抛错', mod.readAsideOpen() === true && mod.writeAsideOpen(false) === undefined)
+delete globalThis.localStorage
 
 /* ---------- 汇总 ---------- */
 

@@ -68,7 +68,9 @@ ctx.slots.inject("workbench.aside", () =>
 3. **声明即渲染授权**：只有声明它的那个注册才能用 `props.renderSlot(key)` 渲染（越界抛
    `SlotOwnershipError`）。空席位靠 `renderSlot(key, props, { fallback })` 的 `fallback` 显示占位。
 
-折叠：`useState`，默认展开；标题栏「对话 ▸」和对话栏自己的「▸」都能收起，收起后正文满宽。
+折叠：标题栏「对话 ▸」和对话栏自己的「▸」都能收起，收起后正文满宽。
+折叠状态写在 `localStorage`（键 `dsh.workbench-kit.aside-open`），刷新 / 换面板 / 重开都保持；
+存储不可用（隐私模式、配额满）时退回默认展开，不影响其它功能。
 宽度是常量 `ASIDE_WIDTH`（340），暂不支持拖拽。
 
 ## 对话中心（工作区映射 + 会话管理）
@@ -132,7 +134,7 @@ ctx.slots.inject("workbench.aside", () =>
 
 ```powershell
 cd plugins\dsh-workbench-kit
-node scripts\smoke.mjs      # 62 项
+node scripts\smoke.mjs      # 69 项
 ```
 
 不联网、不依赖 GUI：桩 `window.__ModuleLoader__` 捕获工厂，桩 `slots`/`ctx` 记录注册，桩渲染器
@@ -167,7 +169,7 @@ label/title 文案、席位声明与渲染授权、空席位 fallback、拿不�
 ## 已知边界
 
 - 只有入口、框体与对话中心；正文还没有任何业务功能，也没有设置项与快捷键。
-- 框体折叠状态是组件本地 state：换面板 / 刷新后回到展开。
+- 框体折叠状态持久化在 `localStorage`（单键，未按工作台区分；将来多工作台再改成按名字分键）。
 - 对话栏宽度固定，不支持拖拽；没有「全屏工作台」开关。
 - 对话中心只做「列 + 打开 + 新建」：重命名 / 归档 / 删除会话沿用左侧菜单，这里没做。
 - 自动建工作区依赖 `ctx.remote.directoryPicker`（宿主目录能力）。若该能力不可用，只会在对话中心
