@@ -1,0 +1,53 @@
+{
+  "name": "dsh-workbench-kit",
+  "version": "0.1.0",
+  "description": "场景工作台框架（入口骨架）：左栏面板入口 + 右栏开始页入口，同一点进一张空白工作台",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "scripts/smoke.mjs"
+  ],
+  "scripts": {
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.0 <5"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "workbench"
+  ],
+  "license": "MIT"
+}

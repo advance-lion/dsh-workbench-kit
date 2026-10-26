@@ -1,0 +1,11 @@
+# dsh-workbench-kit bundle patch
+#
+# 这一层把插件行插进任何选中 `dsh-workbench-kit` 的 profile：
+# 安装时 `dsh plugin --profile <name> add <spec>` 会做两件事——
+#   1. 把 `dsh-workbench-kit` 追加进 profile package.json 的 `dsh.profile.bundles`；
+#   2. profile 启动时合并本补丁（一次 insert），于是插件行出现在 Loader 树里。
+#
+# 插件只有浏览器半边（dsh.client），宿主半边是空实现，因此无需 config。
+- insert:
+    - id: workbench-kit
+      name: dsh-workbench-kit
